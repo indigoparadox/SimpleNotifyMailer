@@ -38,6 +38,13 @@ namespace SimpleUtils {
 
     public class SimpleNotifyMailer {
 
+        public class Options {
+            public string Server { get; set; }
+            public string Port { get; set; }
+            public string FromAddress { get; set; }
+            public string[] ToAddresses { get; set; }
+        }
+
         private SmtpClient notifyClient;
         private string serverName;
         private string fromAddress;
@@ -49,6 +56,10 @@ namespace SimpleUtils {
             this.notifyClient = new SmtpClient( mailHostIn, mailPortIn );
             this.notifyClient.DeliveryMethod = SmtpDeliveryMethod.Network;
             this.notifyClient.UseDefaultCredentials = false;
+        }
+
+        public static void SetNotifyOptionsRegistry( string appKeyIn, SimpleNotifyMailer.Options optionsIn ) {
+            // TODO        
         }
 
         public static void SetNotifyOptionsRegistry( string appKeyIn, string serverIn, string portIn, string fromAddressIn, string[] toAddressesIn ) {
@@ -78,32 +89,46 @@ namespace SimpleUtils {
             }
         }
 
-        public static void GetNotifyOptionsRegistry( string appKeyIn, out string serverOut, out string portOut, out string fromAddressOut, out string[] toAddressesOut ) {
-            serverOut = (string)Registry.GetValue(
+        public static SimpleNotifyMailer.Options GetNotifyOptionsRegistry( string appKeyIn ) {
+            SimpleNotifyMailer.Options optionsOut = new SimpleNotifyMailer.Options();
+
+            optionsOut.Server = (string)Registry.GetValue(
                 "HKEY_LOCAL_MACHINE\\Software\\" + appKeyIn,
                 "NotifyMailServer",
                 "127.0.0.1"
             );
-            portOut = (string)Registry.GetValue(
+            if( null == optionsOut.Server ) {
+                optionsOut.Server = "";
+            }
+
+            optionsOut.Port = (string)Registry.GetValue(
                 "HKEY_LOCAL_MACHINE\\Software\\" + appKeyIn,
                 "NotifyMailPort",
                 "25"
             );
-            fromAddressOut = (string)Registry.GetValue(
+            if( null == optionsOut.Port ) {
+                optionsOut.Port = "";
+            }
+            
+            optionsOut.FromAddress = (string)Registry.GetValue(
                 "HKEY_LOCAL_MACHINE\\Software\\" + appKeyIn,
                 "NotifyMailFromAddress",
                 "test@example.com"
             );
-            string notifyMailAddresses = (string)Registry.GetValue(
+            if( null == optionsOut.FromAddress ) {
+                optionsOut.FromAddress = "";
+            }
+
+            optionsOut.ToAddresses = ((string)Registry.GetValue(
                 "HKEY_LOCAL_MACHINE\\Software\\" + appKeyIn,
                 "NotifyMailAddresses",
                 ""
-            );
-            if( null != notifyMailAddresses ) {
-                toAddressesOut = notifyMailAddresses.Split( ',' );
-            } else {
-                toAddressesOut = new string[] { };
+            )).Split( ',' );
+            if( null == optionsOut.ToAddresses ) {
+                optionsOut.ToAddresses = new string[] { };
             }
+
+            return optionsOut;
         }
 
         public void Notify( string toAddress, string subjectIn, string bodyIn ) {
