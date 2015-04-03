@@ -1,0 +1,5 @@
+syntax: glob
+SimpleNotifyMailer.v12.suo
+*/bin
+*/obj
+*.TMP
