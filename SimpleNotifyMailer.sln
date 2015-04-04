@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleNotifyMailer", "SimpleNotifyMailer\SimpleNotifyMailer.csproj", "{271BA597-A2D1-4314-ADD9-6EC4FBAF300C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleConfig", "SimpleConfig\SimpleConfig.csproj", "{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{271BA597-A2D1-4314-ADD9-6EC4FBAF300C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{271BA597-A2D1-4314-ADD9-6EC4FBAF300C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{271BA597-A2D1-4314-ADD9-6EC4FBAF300C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
