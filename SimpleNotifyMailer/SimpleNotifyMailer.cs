@@ -83,11 +83,8 @@ namespace SimpleUtils {
             optionsOut.Server = appConfig.Get( "NotifyMailServer", "127.0.0.1" );
             optionsOut.Port = appConfig.Get( "NotifyMailPort", "25" );
             optionsOut.FromAddress = appConfig.Get( "NotifyMailFromAddress", "test@example.com" );
-            optionsOut.ToAddresses = appConfig.Get( "NotifyMailAddresses", "" ).Split( ',' );
-            if( null == optionsOut.ToAddresses ) {
-                optionsOut.ToAddresses = new string[] { };
-            }
-
+            optionsOut.ToAddresses = appConfig.GetList( "NotifyMailAddresses", ',' );
+            
             return optionsOut;
         }
 
