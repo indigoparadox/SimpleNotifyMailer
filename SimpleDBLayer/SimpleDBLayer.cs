@@ -6,15 +6,22 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+
+#if USE_SQLITE_MANAGED
 using Community.CsharpSqlite.SQLiteClient;
 
 using SQLiteConnection = Community.CsharpSqlite.SQLiteClient.SqliteConnection;
 using SQLiteException = Community.CsharpSqlite.SQLiteClient.SqliteException;
 using SQLiteCommand = Community.CsharpSqlite.SQLiteClient.SqliteCommand;
 using SQLiteDataReader = Community.CsharpSqlite.SQLiteClient.SqliteDataReader;
+using SQLiteBusyException = Community.CsharpSqlite.SQLiteClient.SqliteBusyException;
+using System.Threading;
+#endif // USE_SQLITE_MANAGED
 
 namespace SimpleUtils {
     public class SimpleDBLayer : IDisposable {
+
+        private static readonly int MAX_ATTEMPTS = 5;
 
         public class DBJoinTable {
             public string TableName { get; set; }
@@ -96,10 +103,18 @@ namespace SimpleUtils {
         private SQLiteConnection database;
 #endif // USE_SQLITE
 
-        public SimpleDBLayer( string dbPath ) {
+        public SimpleDBLayer( string dbPath ) : this( dbPath, true ) {
+        }
+
+        public SimpleDBLayer( string dbPath, bool useWall ) {
 
 #if USE_SQLITE
-            string connectionString = String.Format( "Data Source={0}; Version=3; Journal Mode=WAL;", dbPath );
+            string journalMode = "";
+            if( useWall ) {
+                journalMode = " Journal Mode=WAL;";
+            }
+
+            string connectionString = String.Format( "Data Source={0}; Version=3;{1}", dbPath, journalMode );
 
 #if !USE_SQLITE_MANAGED
             try {
@@ -199,6 +214,8 @@ namespace SimpleUtils {
                         createCmd.ExecuteNonQuery();
                     }
                 }
+            } catch( SQLiteBusyException ex ) {
+                throw new SimpleDBLayerBusyException( ex.Message );
             } catch( SQLiteException ex ) {
                 throw new SimpleDBLayerException( ex.Message );
             }
@@ -366,10 +383,14 @@ namespace SimpleUtils {
         }
 
         public void InsertRow( string table, Dictionary<string, object> columnData ) {
-            this.InsertRow( table, columnData, false );
+            this.InsertRow( table, columnData, false, false );
         }
 
         public void InsertRow( string table, Dictionary<string, object> columnData, bool orIgnore ) {
+            this.InsertRow( table, columnData, orIgnore, false );
+        }
+
+        public void InsertRow( string table, Dictionary<string, object> columnData, bool orIgnore, bool keepTrying ) {
 
             string insertString = String.Format(
                 "INSERT{3}INTO {0} ({1}) VALUES ({2})",
@@ -380,23 +401,38 @@ namespace SimpleUtils {
             );
 
 #if USE_SQLITE
-            try {
-                using( SQLiteCommand insertCmd = new SQLiteCommand( insertString, this.database ) ) {
-                    foreach( string columnKey in columnData.Keys ) {
+            int attempts = 0;
+            while( attempts < MAX_ATTEMPTS ) {
+                try {
+                    using( SQLiteCommand insertCmd = new SQLiteCommand( insertString, this.database ) ) {
+                        foreach( string columnKey in columnData.Keys ) {
 #if USE_SQLITE_MANAGED
-                        insertCmd.Parameters.Add(
-                            String.Format( "@{0}_param", columnKey ), columnData[columnKey]
-                        );
+                            insertCmd.Parameters.Add(
+                                String.Format( "@{0}_param", columnKey ), columnData[columnKey]
+                            );
 #else
                         insertCmd.Parameters.AddWithValue(
                             String.Format( "@{0}_param", columnKey ), columnData[columnKey]
                         );
 #endif // USE_SQLITE_MANAGED
+                        }
+                        insertCmd.ExecuteNonQuery();
+
+                        // We were successful, so just go ahead.
+                        attempts = MAX_ATTEMPTS;
                     }
-                    insertCmd.ExecuteNonQuery();
+                } catch( SQLiteBusyException ex ) {
+                    if( keepTrying ) {
+                        // Increment and try again.
+                        attempts++;
+                        Thread.Sleep( 1000 );
+                    } else {
+                        // Just throw it upwards if we're not to keep trying.
+                        throw new SimpleDBLayerBusyException( ex.Message );
+                    }
+                } catch( SQLiteException ex ) {
+                    throw new SimpleDBLayerException( ex.Message );
                 }
-            } catch( SQLiteException ex ) {
-                throw new SimpleDBLayerException( ex.Message );
             }
 #endif
         }

@@ -9,6 +9,10 @@ namespace SimpleUtils {
         public SimpleDBLayerException( string message ) : base( message ) { }
     }
 
+    public class SimpleDBLayerBusyException : SimpleDBLayerException {
+        public SimpleDBLayerBusyException( string message ) : base( message ) { }
+    }
+
     public class SimpleDBLayerIndex {
         public string IndexName { get; set; }
         public string TableName { get; set; }

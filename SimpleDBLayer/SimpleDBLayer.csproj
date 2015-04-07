@@ -11,7 +11,7 @@
     <AssemblyName>SimpleDBLayer</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>8fdbd227</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>8552ab43</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,6 +31,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Community.CsharpSqlite">
+      <HintPath>..\packages\Community.CsharpSqlite.SQLiteClient.3.7.7.3\lib\net40\Community.CsharpSqlite.dll</HintPath>
+    </Reference>
+    <Reference Include="Community.CsharpSqlite.SQLiteClient">
+      <HintPath>..\packages\Community.CsharpSqlite.SQLiteClient.3.7.7.3\lib\net40\Community.CsharpSqlite.SQLiteClient.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -40,127 +46,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteClientFactory.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteCommand.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteCommandBuilder.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteConnection.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteConnectionStringBuilder.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteDataAdapter.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteDataReader.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteDataSourceEnumerator.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteError.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteExceptions.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteParameter.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteParameterCollection.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteRowUpdatedEventArgs.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteRowUpdatedEventHandler.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteRowUpdatingEventArgs.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteRowUpdatingEventHandler.cs" />
-    <Compile Include="Community.CsharpSqlite.SQLiteClient\SqliteTransaction.cs" />
-    <Compile Include="Community.CsharpSqlite\alter_c.cs" />
-    <Compile Include="Community.CsharpSqlite\analyze_c.cs" />
-    <Compile Include="Community.CsharpSqlite\attach_c.cs" />
-    <Compile Include="Community.CsharpSqlite\auth_c.cs" />
-    <Compile Include="Community.CsharpSqlite\backup_c.cs" />
-    <Compile Include="Community.CsharpSqlite\bitvec_c.cs" />
-    <Compile Include="Community.CsharpSqlite\btmutex_c.cs" />
-    <Compile Include="Community.CsharpSqlite\BtreeInt_h.cs" />
-    <Compile Include="Community.CsharpSqlite\btree_c.cs" />
-    <Compile Include="Community.CsharpSqlite\Btree_h.cs" />
-    <Compile Include="Community.CsharpSqlite\build_c.cs" />
-    <Compile Include="Community.CsharpSqlite\callback_c.cs" />
-    <Compile Include="Community.CsharpSqlite\complete_c.cs" />
-    <Compile Include="Community.CsharpSqlite\crypto.cs" />
-    <Compile Include="Community.CsharpSqlite\ctime_c.cs" />
-    <Compile Include="Community.CsharpSqlite\date_c.cs" />
-    <Compile Include="Community.CsharpSqlite\Delegates.cs" />
-    <Compile Include="Community.CsharpSqlite\delete_c.cs" />
-    <Compile Include="Community.CsharpSqlite\expr_c.cs" />
-    <Compile Include="Community.CsharpSqlite\fault_c.cs" />
-    <Compile Include="Community.CsharpSqlite\fkey_c.cs" />
-    <Compile Include="Community.CsharpSqlite\func_c.cs" />
-    <Compile Include="Community.CsharpSqlite\global_c.cs" />
-    <Compile Include="Community.CsharpSqlite\hash_c.cs" />
-    <Compile Include="Community.CsharpSqlite\Hash_h.cs" />
-    <Compile Include="Community.CsharpSqlite\hwtime_c.cs" />
-    <Compile Include="Community.CsharpSqlite\insert_c.cs" />
-    <Compile Include="Community.CsharpSqlite\journal_c.cs" />
-    <Compile Include="Community.CsharpSqlite\keywordhash_h.cs" />
-    <Compile Include="Community.CsharpSqlite\legacy_c.cs" />
-    <Compile Include="Community.CsharpSqlite\loadext_c.cs" />
-    <Compile Include="Community.CsharpSqlite\main_c.cs" />
-    <Compile Include="Community.CsharpSqlite\malloc_c.cs" />
-    <Compile Include="Community.CsharpSqlite\memjournal_c.cs" />
-    <Compile Include="Community.CsharpSqlite\mem_Pool.cs" />
-    <Compile Include="Community.CsharpSqlite\mutex_c.cs" />
-    <Compile Include="Community.CsharpSqlite\mutex_h.cs" />
-    <Compile Include="Community.CsharpSqlite\mutex_noop_c.cs" />
-    <Compile Include="Community.CsharpSqlite\mutex_w32.cs" />
-    <Compile Include="Community.CsharpSqlite\notify_c.cs" />
-    <Compile Include="Community.CsharpSqlite\opcodes_c.cs" />
-    <Compile Include="Community.CsharpSqlite\opcodes_h.cs" />
-    <Compile Include="Community.CsharpSqlite\os_c.cs" />
-    <Compile Include="Community.CsharpSqlite\os_common_h.cs" />
-    <Compile Include="Community.CsharpSqlite\os_h.cs" />
-    <Compile Include="Community.CsharpSqlite\os_win_c.cs" />
-    <Compile Include="Community.CsharpSqlite\pager_c.cs" />
-    <Compile Include="Community.CsharpSqlite\pager_h.cs" />
-    <Compile Include="Community.CsharpSqlite\parse_c.cs" />
-    <Compile Include="Community.CsharpSqlite\parse_h.cs" />
-    <Compile Include="Community.CsharpSqlite\pcache1_c.cs" />
-    <Compile Include="Community.CsharpSqlite\pcache_c.cs" />
-    <Compile Include="Community.CsharpSqlite\pcache_h.cs" />
-    <Compile Include="Community.CsharpSqlite\pragma_c.cs" />
-    <Compile Include="Community.CsharpSqlite\prepare_c.cs" />
-    <Compile Include="Community.CsharpSqlite\printf_c.cs" />
-    <Compile Include="Community.CsharpSqlite\random_c.cs" />
-    <Compile Include="Community.CsharpSqlite\resolve_c.cs" />
-    <Compile Include="Community.CsharpSqlite\rowset_c.cs" />
-    <Compile Include="Community.CsharpSqlite\select_c.cs" />
-    <Compile Include="Community.CsharpSqlite\sqlite3_h.cs" />
-    <Compile Include="Community.CsharpSqlite\sqliteInt_h.cs" />
-    <Compile Include="Community.CsharpSqlite\sqliteLimit_h.cs" />
-    <Compile Include="Community.CsharpSqlite\status_c.cs" />
-    <Compile Include="Community.CsharpSqlite\table_c.cs" />
-    <Compile Include="Community.CsharpSqlite\tokenize_c.cs" />
-    <Compile Include="Community.CsharpSqlite\trigger_c.cs" />
-    <Compile Include="Community.CsharpSqlite\update_c.cs" />
-    <Compile Include="Community.CsharpSqlite\utf_c.cs" />
-    <Compile Include="Community.CsharpSqlite\util_c.cs" />
-    <Compile Include="Community.CsharpSqlite\vacuum_c.cs" />
-    <Compile Include="Community.CsharpSqlite\vdbeapi_c.cs" />
-    <Compile Include="Community.CsharpSqlite\vdbeaux_c.cs" />
-    <Compile Include="Community.CsharpSqlite\vdbeblob_c.cs" />
-    <Compile Include="Community.CsharpSqlite\VdbeInt_h.cs" />
-    <Compile Include="Community.CsharpSqlite\vdbemem_c.cs" />
-    <Compile Include="Community.CsharpSqlite\vdbetrace_c.cs" />
-    <Compile Include="Community.CsharpSqlite\vdbe_c.cs" />
-    <Compile Include="Community.CsharpSqlite\Vdbe_h.cs" />
-    <Compile Include="Community.CsharpSqlite\vtab_c.cs" />
-    <Compile Include="Community.CsharpSqlite\walker_c.cs" />
-    <Compile Include="Community.CsharpSqlite\wal_c.cs" />
-    <Compile Include="Community.CsharpSqlite\wal_h.cs" />
-    <Compile Include="Community.CsharpSqlite\where_c.cs" />
     <Compile Include="SimpleDBLayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleDBLayerTypes.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets'))" />
-  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
