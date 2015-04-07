@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleNotifyMailer", "Simpl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleConfig", "SimpleConfig\SimpleConfig.csproj", "{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDBLayer", "SimpleDBLayer\SimpleDBLayer.csproj", "{B7894032-DCD6-4559-927D-954030A7FB94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB39E7B7-BE73-455E-BACB-1C68C9C6E5E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7894032-DCD6-4559-927D-954030A7FB94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7894032-DCD6-4559-927D-954030A7FB94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7894032-DCD6-4559-927D-954030A7FB94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7894032-DCD6-4559-927D-954030A7FB94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
