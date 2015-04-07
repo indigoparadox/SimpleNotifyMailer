@@ -16,7 +16,10 @@ using SQLiteCommand = Community.CsharpSqlite.SQLiteClient.SqliteCommand;
 using SQLiteDataReader = Community.CsharpSqlite.SQLiteClient.SqliteDataReader;
 using SQLiteBusyException = Community.CsharpSqlite.SQLiteClient.SqliteBusyException;
 using System.Threading;
-#endif // USE_SQLITE_MANAGED
+#elif USE_SQLITE
+// We're not using the managed version, so we must be using the official.
+using System.Data.SQLite;
+#endif // USE_SQLITE_MANAGED, USE_SQLITE
 
 namespace SimpleUtils {
     public class SimpleDBLayer : IDisposable {
@@ -214,8 +217,10 @@ namespace SimpleUtils {
                         createCmd.ExecuteNonQuery();
                     }
                 }
+#if USE_SQLITE_MANAGED
             } catch( SQLiteBusyException ex ) {
                 throw new SimpleDBLayerBusyException( ex.Message );
+#endif // USE_SQLITE_MANAGED
             } catch( SQLiteException ex ) {
                 throw new SimpleDBLayerException( ex.Message );
             }
@@ -421,6 +426,7 @@ namespace SimpleUtils {
                         // We were successful, so just go ahead.
                         attempts = MAX_ATTEMPTS;
                     }
+#if USE_SQLITE_MANAGED
                 } catch( SQLiteBusyException ex ) {
                     if( keepTrying ) {
                         // Increment and try again.
@@ -430,7 +436,9 @@ namespace SimpleUtils {
                         // Just throw it upwards if we're not to keep trying.
                         throw new SimpleDBLayerBusyException( ex.Message );
                     }
+#endif // USE_SQLITE_MANAGED
                 } catch( SQLiteException ex ) {
+                    // TODO: Detect busy exception and handle with keepTrying if not managed.
                     throw new SimpleDBLayerException( ex.Message );
                 }
             }
