@@ -4,13 +4,13 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 
-namespace SonicLogCatch {
+namespace SimpleUtils {
 
-    public class DBAbstractException : Exception {
-        public DBAbstractException( string message ) : base( message ) { }
+    public class SimpleDBLayerException : Exception {
+        public SimpleDBLayerException( string message ) : base( message ) { }
     }
 
-    public class DBAbstractor : IDisposable {
+    public class SimpleDBLayer : IDisposable {
 
         public class DBJoinTable {
             public string TableName { get; set; }
@@ -92,7 +92,7 @@ namespace SonicLogCatch {
         private SQLiteConnection database;
 #endif
 
-        public DBAbstractor( string dbPath ) {
+        public SimpleDBLayer( string dbPath ) {
 #if USE_SQLITE
 
             try {
@@ -100,7 +100,7 @@ namespace SonicLogCatch {
                     SQLiteConnection.CreateFile( dbPath );
                 }
             } catch( IOException ex ) {
-                throw new DBAbstractException( ex.Message );
+                throw new SimpleDBLayerException( ex.Message );
             }
 
             this.database = new SQLiteConnection( String.Format( "Data Source={0}; Version=3; Journal Mode=WAL;", dbPath ) );
@@ -210,7 +210,7 @@ namespace SonicLogCatch {
                     createCmd.ExecuteNonQuery();
                 }
             } catch( SQLiteException ex ) {
-                throw new DBAbstractException( ex.Message );
+                throw new SimpleDBLayerException( ex.Message );
             }
 #endif
         }
@@ -391,7 +391,7 @@ namespace SonicLogCatch {
                     insertCmd.ExecuteNonQuery();
                 }
             } catch( SQLiteException ex ) {
-                throw new DBAbstractException( ex.Message );
+                throw new SimpleDBLayerException( ex.Message );
             }
 #endif
         }
