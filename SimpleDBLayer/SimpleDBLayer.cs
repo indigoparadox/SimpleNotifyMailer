@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+#if DEBUG
+using System.Diagnostics;
+#endif // DEBUG
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace SimpleUtils {
-
-    public class SimpleDBLayerException : Exception {
-        public SimpleDBLayerException( string message ) : base( message ) { }
-    }
-
     public class SimpleDBLayer : IDisposable {
 
         public class DBJoinTable {
@@ -114,100 +113,82 @@ namespace SimpleUtils {
 #endif
         }
 
-        public void EnsureTablesAndIndexes() {
+        public void EnsureTablesAndIndexes( SimpleDBLayerTable[] tablesIn, SimpleDBLayerIndex[] indexesIn ) {
 
             // TODO: Check version.
-            
+
 #if USE_SQLITE
             try {
-                SQLiteCommand createCmd;
-                using( createCmd = new SQLiteCommand(
-                    "CREATE TABLE IF NOT EXISTS usernames ( " +
-                        "key INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "name VARCHAR(255), " +
-                        "UNIQUE(name)" +
-                    ")",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE TABLE IF NOT EXISTS hostnames ( " +
-                        "key INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "name VARCHAR(255), " +
-                        "UNIQUE(name)" +
-                    ")",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE TABLE IF NOT EXISTS traffic ( " +
-                        "key INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "time DOUBLE NOT NULL, " +
-                        "src_ip UNSIGNED BIG INT NOT NULL, " +
-                        "src_name INTEGER, " +
-                        "user_name INTEGER, " +
-                        "dest_ip UNSIGNED BIG INT NOT NULL, " +
-                        "dest_name INTEGER, " +
-                        "sent_bytes INTEGER NOT NULL, " +
-                        "rcvd_bytes INTEGER NOT NULL, " +
-                        "FOREIGN KEY(src_name) REFERENCES hostnames(key), " +
-                        "FOREIGN KEY(user_name) REFERENCES usernames(key)" +
-                        "FOREIGN KEY(dest_name) REFERENCES hostnames(key)" +
-                    ")",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE TABLE IF NOT EXISTS system (version)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
+                foreach( SimpleDBLayerTable table in tablesIn ) {
+                    StringBuilder createQueryString = new StringBuilder();
+
+                    createQueryString.Append( "CREATE TABLE IF NOT EXISTS " + table.TableName + " (" );
+
+                    List<string> uniqueColumns = new List<string>();
+                    Dictionary<string, SimpleDBLayerTableColumn> foreignKeys = new Dictionary<string, SimpleDBLayerTableColumn>();
+
+                    foreach( SimpleDBLayerColumn column in table.TableColumns ) {
+                        createQueryString.Append( String.Format(
+                            "{0} {1} {2} {3}, ",
+                            column.ColumnName,
+                            SimpleDBLayerColumn.GetTypeString( column.ColumnType ),
+                            column.ColumnPrimaryKey ? "PRIMARY KEY" : "",
+                            column.ColumnNotNull ? "NOT NULL" : "",
+                            column.ColumnAutoIncrement ? "AUTOINCREMENT" : ""
+                        ) );
+
+                        // Save additional column information for the end of the statement.
+
+                        if( column.ColumnUnique ) {
+                            uniqueColumns.Add( column.ColumnName );
+                        }
+
+                        if( null != column.ColumnForeignKey ) {
+                            foreignKeys.Add( column.ColumnName, column.ColumnForeignKey );
+                        }
+                    }
+
+                    // Apply unique columns and foreign keys using informaton saved above.
+                    
+                    foreach( string column in uniqueColumns ) {
+                        createQueryString.Append( String.Format( "UNIQUE({0}), ", column ) );
+                    }
+
+                    foreach( string foreignKey in foreignKeys.Keys ) {
+                        createQueryString.Append( String.Format(
+                            "FOREIGN KEY({0}) REFERENCES {1}({2}), ",
+                            foreignKey,
+                            foreignKeys[foreignKey].TableName,
+                            foreignKeys[foreignKey].ColumnName
+                        ) );
+                    }
+
+                    // Strip off last comma.
+                    createQueryString.Remove( createQueryString.Length - 2, 2 );
+
+                    createQueryString.Append( ")" );
+
+#if DEBUG
+                    Debug.WriteLine( createQueryString.ToString() );
+#endif // DEBUG
+
+                    using( SQLiteCommand createCmd = new SQLiteCommand( createQueryString.ToString(), this.database ) ) {
+                        createCmd.ExecuteNonQuery();
+                    }
                 }
 
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS key_idx ON hostnames(key)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS name_idx ON hostnames(name)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS time_idx ON traffic(time)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS src_ip_idx ON traffic(src_ip)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS dest_ip_idx ON traffic(dest_ip)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS username_idx ON usernames(name)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
-                }
-                using( createCmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS username_traffic_idx ON traffic(user_name)",
-                    this.database
-                ) ) {
-                    createCmd.ExecuteNonQuery();
+                foreach( SimpleDBLayerIndex index in indexesIn ) {
+                    using( SQLiteCommand createCmd = new SQLiteCommand(
+                        String.Format(
+                            "CREATE INDEX IF NOT EXISTS {0} ON {1}({2})",
+                            index.IndexName,
+                            index.TableName,
+                            index.ColumnName
+                        ),
+                        this.database
+                    ) ) {
+                        createCmd.ExecuteNonQuery();
+                    }
                 }
             } catch( SQLiteException ex ) {
                 throw new SimpleDBLayerException( ex.Message );
@@ -215,7 +196,7 @@ namespace SimpleUtils {
 #endif
         }
 
-        private static string TransformProxyToken( DBCondition condition ){
+        private static string TransformProxyToken( DBCondition condition ) {
             string tentative = "@" + condition.TableChar + condition.ColumnKey;
             tentative = tentative.Replace( "_", "" );
             switch( condition.Comparator ) {
@@ -379,7 +360,7 @@ namespace SimpleUtils {
                 string.Join( ",", columnData.Keys.Select( s => String.Format( "@{0}_param", s ) ).ToArray() ),
                 orIgnore ? " OR IGNORE " : " "
             );
-            
+
 #if USE_SQLITE
             try {
                 using( SQLiteCommand insertCmd = new SQLiteCommand( insertString, this.database ) ) {
