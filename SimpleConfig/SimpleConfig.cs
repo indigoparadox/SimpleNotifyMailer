@@ -5,9 +5,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+#if USE_WINFORMS
+using System.Windows.Forms;
+using System.Diagnostics;
+#endif // USE_WINFORMS
 
-namespace SimpleUtils
-{
+namespace SimpleUtils {
+#if USE_REGISTRY
+    public enum SimpleConfigRegistryNode {
+        NODE_32,
+        NODE_64,
+        NODE_DEFAULT
+    }
+#endif // USE_REGISTRY
+
+    public class SimpleConfigException : Exception {
+        public SimpleConfigException( string messageIn ) : base( messageIn ) { }
+    }
+
     public class SimpleConfig {
         private Dictionary<string, string> internalConfig;
 
@@ -27,27 +42,140 @@ namespace SimpleUtils
             }
         }
 
+        public string[] GetList( string keyIn, char separatorIn ) {
+            string listString = this.Get( keyIn, "" );
+            string[] listOut;
+            if( string.IsNullOrWhiteSpace( listString ) ) {
+                listOut = new string[] { };
+            } else {
+                listOut = listString.Split( separatorIn );
+            }
+            return listOut;
+        }
+
+#if USE_WINFORMS
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="textBoxIn"></param>
+        /// <param name="listBoxIn"></param>
+        /// <param name="listNameIn">The human-readable name of the list. Should fit in the sentence structure "The [listNameIn] list".</param>
+        public static void AddTextToList( TextBox textBoxIn, ListBox listBoxIn, string listNameIn ) {
+            
+            // Just ignore empty input strings.
+            if( string.IsNullOrWhiteSpace( textBoxIn.Text ) ) {
+                return;
+            }
+            
+            if( listBoxIn.Items.Contains( textBoxIn.Text ) ) {
+                MessageBox.Show(
+                    String.Format( "The {0} list already contains the item \"{1}\".", listNameIn, textBoxIn.Text ),
+                    Application.ProductName,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            } else {
+                listBoxIn.Items.Add( textBoxIn.Text );
+                textBoxIn.Text = "";
+            }
+        }
+
+        public static void RemoveTextFromList( ListBox listBoxIn ) {
+            if(
+                0 <= listBoxIn.SelectedIndex &&
+                listBoxIn.SelectedIndex < listBoxIn.Items.Count
+            ) {
+                listBoxIn.Items.Remove( (string)listBoxIn.Items[listBoxIn.SelectedIndex] );
+            }
+        }
+#endif // USE_WINFORMS
+
 #if USE_REGISTRY
         public void SaveConfigRegistry( string appKeyIn ) {
+            this.SaveConfigRegistry( appKeyIn, SimpleConfigRegistryNode.NODE_DEFAULT );
+        }
+
+        public void SaveConfigRegistry( string appKeyIn, SimpleConfigRegistryNode regNodeIn ) {
+
+            RegistryView regView = RegistryView.Default;
+            switch(regNodeIn){
+                case SimpleConfigRegistryNode.NODE_32:
+                    regView = RegistryView.Registry32;
+                    break;
+                case SimpleConfigRegistryNode.NODE_64:
+                    regView = RegistryView.Registry64;
+                    break;
+            }
+
+            try {
+                using( RegistryKey baseKey = RegistryKey.OpenBaseKey( RegistryHive.LocalMachine, regView ) ) {
+
+                    // Make sure the key exists before writing to it.
+                    using( RegistryKey loadKey = baseKey.OpenSubKey( "Software\\" + appKeyIn ) ) {
+                        if( null == loadKey ) {
+                            baseKey.CreateSubKey( "Software\\" + appKeyIn );
+                        }
+                    }
+
+                    // Write out the config as subkeys.
+                    using( RegistryKey loadKey = baseKey.OpenSubKey( "Software\\" + appKeyIn, true ) ) {
+                        foreach( string keyIter in this.internalConfig.Keys ) {
+                            loadKey.SetValue(
+                                keyIter,
+                                this.internalConfig[keyIter],
+                                RegistryValueKind.String
+                            );
+                        }
+                    }
+                }
+            } catch( UnauthorizedAccessException ex ) {
+                // Wrap and throw upwards to isolate usings.
+                throw new SimpleConfigException( ex.Message );
+            }
         }
 
         public static SimpleConfig LoadConfigRegistry( string appKeyIn ) {
+            return SimpleConfig.LoadConfigRegistry( appKeyIn, SimpleConfigRegistryNode.NODE_DEFAULT );
+        }
+
+        public static SimpleConfig LoadConfigRegistry( string appKeyIn, SimpleConfigRegistryNode regNodeIn ) {
             SimpleConfig optionsOut = new SimpleConfig();
 
-            using( RegistryKey loadKey = Registry.LocalMachine.OpenSubKey( "Software\\" + appKeyIn ) ) {
-                foreach( string valueName in loadKey.GetValueNames() ) {
-                    optionsOut.Set(
-                        valueName,
-                        (string)Registry.GetValue(
-                            "HKEY_LOCAL_MACHINE\\Software\\" + appKeyIn,
-                            valueName,
-                            ""
-                        )
-                    );
-                    if( null == optionsOut.Get( valueName, null ) ) {
-                        optionsOut.Set(valueName, "" );
+            RegistryView regView = RegistryView.Default;
+            switch( regNodeIn ) {
+                case SimpleConfigRegistryNode.NODE_32:
+                    regView = RegistryView.Registry32;
+                    break;
+                case SimpleConfigRegistryNode.NODE_64:
+                    regView = RegistryView.Registry64;
+                    break;
+            }
+
+            try {
+                using( RegistryKey baseKey = RegistryKey.OpenBaseKey( RegistryHive.LocalMachine, regView ) ) {
+                    using( RegistryKey loadKey = baseKey.OpenSubKey( "Software\\" + appKeyIn ) ) {
+                        if( null == loadKey ) {
+                            // The key doesn't exist, so we can't do anything, anyway.
+                            return new SimpleConfig();
+                        }
+
+                        foreach( string valueName in loadKey.GetValueNames() ) {
+                            optionsOut.Set(
+                                valueName,
+                                (string)loadKey.GetValue(
+                                    valueName,
+                                    ""
+                                )
+                            );
+                            if( null == optionsOut.Get( valueName, null ) ) {
+                                optionsOut.Set( valueName, "" );
+                            }
+                        }
                     }
                 }
+            } catch( UnauthorizedAccessException ex ) {
+                // Wrap and throw upwards to isolate usings.
+                throw new SimpleConfigException( ex.Message );
             }
 
             return optionsOut;
