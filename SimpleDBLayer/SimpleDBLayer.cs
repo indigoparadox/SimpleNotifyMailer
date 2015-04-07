@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 #if DEBUG
 using System.Diagnostics;
 #endif // DEBUG
 using System.IO;
 using System.Linq;
 using System.Text;
+using Community.CsharpSqlite.SQLiteClient;
+
+using SQLiteConnection = Community.CsharpSqlite.SQLiteClient.SqliteConnection;
+using SQLiteException = Community.CsharpSqlite.SQLiteClient.SqliteException;
+using SQLiteCommand = Community.CsharpSqlite.SQLiteClient.SqliteCommand;
+using SQLiteDataReader = Community.CsharpSqlite.SQLiteClient.SqliteDataReader;
 
 namespace SimpleUtils {
     public class SimpleDBLayer : IDisposable {
@@ -89,11 +94,14 @@ namespace SimpleUtils {
 
 #if USE_SQLITE
         private SQLiteConnection database;
-#endif
+#endif // USE_SQLITE
 
         public SimpleDBLayer( string dbPath ) {
-#if USE_SQLITE
 
+#if USE_SQLITE
+            string connectionString = String.Format( "Data Source={0}; Version=3; Journal Mode=WAL;", dbPath );
+
+#if !USE_SQLITE_MANAGED
             try {
                 if( !File.Exists( dbPath ) ) {
                     SQLiteConnection.CreateFile( dbPath );
@@ -101,10 +109,11 @@ namespace SimpleUtils {
             } catch( IOException ex ) {
                 throw new SimpleDBLayerException( ex.Message );
             }
+#endif // !USE_SQLITE_MANAGED
 
-            this.database = new SQLiteConnection( String.Format( "Data Source={0}; Version=3; Journal Mode=WAL;", dbPath ) );
+            this.database = new SQLiteConnection( connectionString );
             this.database.Open();
-#endif
+#endif // USE_SQLITE_MANAGED, USE_SQLITE
         }
 
         public void Dispose() {
@@ -193,7 +202,7 @@ namespace SimpleUtils {
             } catch( SQLiteException ex ) {
                 throw new SimpleDBLayerException( ex.Message );
             }
-#endif
+#endif // USE_SQLITE
         }
 
         private static string TransformProxyToken( DBCondition condition ) {
@@ -220,7 +229,9 @@ namespace SimpleUtils {
             );
 
             object selectOut = null;
-#if USE_SQLITE
+#if USE_SQLITE_MANAGED
+            //using( Sqlite3 
+#elif USE_SQLITE
             using( SQLiteCommand readCommand = new SQLiteCommand( selectString, this.database ) ) {
                 readCommand.Parameters.AddWithValue( "@comparerParam", comparer );
                 selectOut = readCommand.ExecuteScalar();
@@ -304,10 +315,17 @@ namespace SimpleUtils {
 
                 // Add the proxies.
                 foreach( DBCondition condition in conditions ) {
+#if USE_SQLITE_MANAGED
+                    trafficReadCommand.Parameters.Add(
+                        TransformProxyToken( condition ),
+                        condition.TestValue
+                    );
+#else
                     trafficReadCommand.Parameters.AddWithValue(
                         TransformProxyToken( condition ),
                         condition.TestValue
                     );
+#endif // USE_SQLITE_MANAGED
                 }
 
                 using( SQLiteDataReader reader = trafficReadCommand.ExecuteReader() ) {
@@ -365,9 +383,15 @@ namespace SimpleUtils {
             try {
                 using( SQLiteCommand insertCmd = new SQLiteCommand( insertString, this.database ) ) {
                     foreach( string columnKey in columnData.Keys ) {
+#if USE_SQLITE_MANAGED
+                        insertCmd.Parameters.Add(
+                            String.Format( "@{0}_param", columnKey ), columnData[columnKey]
+                        );
+#else
                         insertCmd.Parameters.AddWithValue(
                             String.Format( "@{0}_param", columnKey ), columnData[columnKey]
                         );
+#endif // USE_SQLITE_MANAGED
                     }
                     insertCmd.ExecuteNonQuery();
                 }
