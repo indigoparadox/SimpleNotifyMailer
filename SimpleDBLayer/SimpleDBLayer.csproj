@@ -31,10 +31,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Community.CsharpSqlite">
+    <Reference Include="Community.CsharpSqlite" Condition="$(DefineConstants.Contains('USE_SQLITE_MANAGED'))">
       <HintPath>..\packages\Community.CsharpSqlite.SQLiteClient.3.7.7.3\lib\net40\Community.CsharpSqlite.dll</HintPath>
     </Reference>
-    <Reference Include="Community.CsharpSqlite.SQLiteClient">
+    <Reference Include="Community.CsharpSqlite.SQLiteClient" Condition="$(DefineConstants.Contains('USE_SQLITE_MANAGED'))">
       <HintPath>..\packages\Community.CsharpSqlite.SQLiteClient.3.7.7.3\lib\net40\Community.CsharpSqlite.SQLiteClient.dll</HintPath>
     </Reference>
     <Reference Include="System" />
