@@ -30,6 +30,24 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Pure Managed Release|AnyCPU' ">
+    <OutputPath>bin\AIO Release\</OutputPath>
+    <DefineConstants>TRACE;USE_SQLITE,USE_SQLITE_MANAGED,USE_CSHARP_SQLITE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Pure Managed Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Pure Managed Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;USE_SQLITE,USE_SQLITE_MANAGED,USE_CSHARP_SQLITE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Community.CsharpSqlite" Condition="$(DefineConstants.Contains('USE_SQLITE_MANAGED')) AND $(DefineConstants.Contains('USE_SQLITE'))">
       <HintPath>..\packages\Community.CsharpSqlite.SQLiteClient.3.7.7.3\lib\net40\Community.CsharpSqlite.dll</HintPath>
