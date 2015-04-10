@@ -30,7 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Pure Managed Release|AnyCPU' ">
-    <OutputPath>bin\AIO Release\</OutputPath>
+    <OutputPath>bin\Pure Managed Release\</OutputPath>
     <DefineConstants>TRACE;USE_REGISTRY,USE_WINFORMS</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>

@@ -31,7 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Pure Managed Release|AnyCPU' ">
-    <OutputPath>bin\AIO Release\</OutputPath>
+    <OutputPath>bin\Pure Managed Release\</OutputPath>
     <DefineConstants>TRACE;USE_SQLITE,USE_SQLITE_MANAGED,USE_CSHARP_SQLITE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
