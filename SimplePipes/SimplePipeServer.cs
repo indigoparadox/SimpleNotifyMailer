@@ -1,17 +1,29 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading;
 
 namespace SimpleUtils {
+    /// <summary>
+    /// This server will wait for clients to connect and then read a code from
+    /// the connected pipe. This code will then be opened as a pipe to write
+    /// back to the client.
+    /// </summary>
     public class SimplePipeServer : SimplePipePeer {
 
-        private Thread listeningThread = null;
+        private Dictionary<string, NamedPipeClientStream> clientPipeHandles = new Dictionary<string, NamedPipeClientStream>();
+        private Dictionary<string, StreamWriter> clientPipeStreamHandles = new Dictionary<string, StreamWriter>();
+        private Dictionary<string, NamedPipeServerStream> serverPipeHandles = new Dictionary<string, NamedPipeServerStream>();
+        private Dictionary<string, StreamReader> serverPipeStreamHandles = new Dictionary<string, StreamReader>();
 
         public SimplePipeServer( string pipeNameIn ) : base( pipeNameIn ) {
+            this.pipeServer = SimplePipePeer.OpenReadServerPipe( SimplePipePeer.FormatPipeName( pipeNameIn, true ) );
+            this.pipeServerStream = new StreamReader( this.pipeServer );
         }
 
         public void Listen() {
@@ -21,37 +33,39 @@ namespace SimpleUtils {
         }
 
         protected void ListenThread() {
-            SafeFileHandle clientPipeHandle = null;
             while( this.active ) {
-                if( null != this.pipeStream && this.connected ) {
-                    Thread.Sleep( 1000 );
-                    continue;
+                this.pipeServer.WaitForConnection();
+                try {
+                    while( true ) {// Loop until we get a disconnect exception or break.
+                        string readLine = this.pipeServerStream.ReadLine();
+                        if( readLine.StartsWith( "$SimplePipeCommand" ) ) {
+                            string[] readCommandArray = readLine.Split( '.' );
+                            if( readCommandArray[1].Equals( "NewPipe" ) ) {
+                                this.OpenPeerPipes( readCommandArray[2] );
+                                // TODO: Waiting here is a bad idea.
+                                this.serverPipeHandles[readCommandArray[2]].WaitForConnection();
+                                this.clientPipeHandles[readCommandArray[2]].Connect();
+                            }
+                        }
+                    }
+                } catch( IOException ) {
+                    // TODO
                 }
-
-                clientPipeHandle = CreateNamedPipe(
-                    FormatPipeName( this.pipeName ),
-                    DUPLEX | FILE_FLAG_OVERLAPPED,
-                    0,
-                    255,
-                    BUFFER_SIZE,
-                    BUFFER_SIZE,
-                    0,
-                    IntPtr.Zero
-                );
-
-                if( clientPipeHandle.IsInvalid ) {
-                    throw new SimplePipeConnectionException( "Failed to create named pipe." );
-                }
-
-                int success = ConnectNamedPipe( clientPipeHandle, IntPtr.Zero );
-
-                if( 1 != success ) {
-                    throw new SimplePipeConnectionException( "Failed to connect client pipe." );
-                }
-
-                this.pipeStream = new FileStream( clientPipeHandle, FileAccess.ReadWrite, (int)BUFFER_SIZE, true );
-                this.connected = true;
             }
+        }
+
+        public override void Write( string messageIn ) {
+            throw new NotImplementedException();
+        }
+
+        protected override void OpenPeerPipes( string clientCodeIn ) {
+            //Debug.Write( clientCodeIn );
+
+            this.serverPipeHandles.Add( clientCodeIn, SimplePipePeer.OpenReadServerPipe( SimplePipePeer.FormatPipeName( this.pipeName, false ) + "Server" + clientCodeIn ) );
+            this.serverPipeStreamHandles.Add( clientCodeIn, new StreamReader( this.serverPipeHandles[clientCodeIn] ) );
+
+            this.clientPipeHandles.Add( clientCodeIn, new NamedPipeClientStream( SimplePipePeer.FormatPipeName( this.pipeName, false ) + "Client" + clientCodeIn ) );
+            this.clientPipeStreamHandles.Add( clientCodeIn, new StreamWriter( this.clientPipeHandles[clientCodeIn] ) );
         }
     }
 }
