@@ -16,22 +16,14 @@ namespace SimpleUtils {
     /// </summary>
     public class SimplePipeServer : SimplePipePeer {
 
-        private Dictionary<string, NamedPipeClientStream> clientPipeHandles = new Dictionary<string, NamedPipeClientStream>();
-        private Dictionary<string, StreamWriter> clientPipeStreamHandles = new Dictionary<string, StreamWriter>();
-        private Dictionary<string, NamedPipeServerStream> serverPipeHandles = new Dictionary<string, NamedPipeServerStream>();
-        private Dictionary<string, StreamReader> serverPipeStreamHandles = new Dictionary<string, StreamReader>();
-
         public SimplePipeServer( string pipeNameIn ) : base( pipeNameIn ) {
-            this.pipeServer = SimplePipePeer.OpenReadServerPipe( SimplePipePeer.FormatPipeName( pipeNameIn, true ) );
-            this.pipeServerStream = new StreamReader( this.pipeServer );
+            //this.pipeServer = SimplePipePeer.OpenReadServerPipe( SimplePipePeer.FormatPipeName( pipeNameIn, true ) );
+            //this.pipeServerStream = new StreamReader( this.pipeServer );
+
+            this.client = false;
         }
 
-        public void Listen() {
-            if( null == this.listeningThread ) {
-                this.listeningThread = new Thread( this.ListenThread );
-            }
-        }
-
+#if false
         protected void ListenThread() {
             while( this.active ) {
                 this.pipeServer.WaitForConnection();
@@ -54,10 +46,9 @@ namespace SimpleUtils {
             }
         }
 
-        public override void Write( string messageIn ) {
-            throw new NotImplementedException();
-        }
+#endif
 
+#if false
         protected override void OpenPeerPipes( string clientCodeIn ) {
             //Debug.Write( clientCodeIn );
 
@@ -67,5 +58,7 @@ namespace SimpleUtils {
             this.clientPipeHandles.Add( clientCodeIn, new NamedPipeClientStream( SimplePipePeer.FormatPipeName( this.pipeName, false ) + "Client" + clientCodeIn ) );
             this.clientPipeStreamHandles.Add( clientCodeIn, new StreamWriter( this.clientPipeHandles[clientCodeIn] ) );
         }
+#endif
+
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading;
+using System.Diagnostics;
 
 namespace SimpleUtils {
     [TestClass]
@@ -11,30 +12,28 @@ namespace SimpleUtils {
         private class ServerTest : IDisposable {
 
             private SimplePipeServer server;
-            private Thread readLoopThread;
-            private bool serverThreadRunning = true;
 
             public bool RecievedFromClient { get; set; }
 
-            private void TestSimplePipeServerThread() {
-                while( this.serverThreadRunning ) {
-                    string readString = this.server.Read();
-                    if( !String.IsNullOrEmpty( readString ) ) {
-                        this.RecievedFromClient = true;
-                    }
-                }
-            }
-
             public ServerTest( string pipeNameIn ) {
                 this.server = new SimplePipeServer( pipeNameIn );
+                this.server.OnReadCallback = this.OnRead;
                 this.server.Listen();
+            }
 
-                this.readLoopThread = new Thread( this.TestSimplePipeServerThread );
-                this.readLoopThread.Start();
+            public void Write( string messageIn ) {
+                this.server.Write( messageIn, true );
+            }
+
+            private void OnRead( string messageIn ) {
+                if( messageIn.Equals( "Test" ) ) {
+                    this.RecievedFromClient = true;
+                }
+
+                Debug.WriteLine( messageIn );
             }
 
             public void Dispose() {
-                this.serverThreadRunning = false;
                 this.server.Stop();
             }
         }
@@ -77,10 +76,33 @@ namespace SimpleUtils {
             using( ServerTest testServer = new ServerTest(pipeName) ) {
 
                 SimplePipeClient client = new SimplePipeClient( pipeName );
-                client.Connect();
-                client.Write( "Test" );
+                //client.Connect();
+                client.Write( "Test", true );
+
+                // TODO: Actually wait until server has nothing else to read.
+                Thread.Sleep( 2000 );
 
                 Assert.IsTrue( testServer.RecievedFromClient );
+            }
+        }
+
+        [TestMethod]
+        public void TestSimpleServerToClient() {
+
+            string pipeName = "SimplePipeTestPipe";
+            bool clientRead = false;
+
+            using( ServerTest testServer = new ServerTest( pipeName ) ) {
+
+                SimplePipeClient client = new SimplePipeClient( pipeName );
+                client.OnReadCallback += delegate( string messageIn ) { clientRead = true; };
+                client.Listen();
+                testServer.Write( "Test" );
+
+                // TODO: Actually wait until server has nothing else to read.
+                Thread.Sleep( 2000 );
+
+                Assert.IsTrue( clientRead );
             }
         }
     }
