@@ -228,7 +228,13 @@ namespace SimpleUtils {
         }
 
         private static string TransformProxyToken( DBCondition condition ) {
-            string tentative = "@" + condition.TableChar + condition.ColumnKey;
+            string tentative = "";
+
+            if( '\0' == condition.TableChar ) {
+                tentative = "@" + condition.ColumnKey;
+            }else{
+                tentative = "@" + condition.TableChar + condition.ColumnKey;
+            }
             tentative = tentative.Replace( "_", "" );
             switch( condition.Comparator ) {
                 case DBComparator.EQUAL_TO:
@@ -243,6 +249,40 @@ namespace SimpleUtils {
             }
             return tentative;
         }
+
+#if USE_SQLITE
+        protected string[] TransformConditionStrings( DBCondition[] conditions ){
+            
+            List<string> conditionStrings = new List<string>();
+            
+            // Translate the conditions for SQLite.
+            foreach( DBCondition condition in conditions ) {
+                string comparatorString = "=";
+                switch( condition.Comparator ) {
+                    case DBComparator.GREATER_THAN:
+                        comparatorString = ">";
+                        break;
+
+                    case DBComparator.LESS_THAN:
+                        comparatorString = "<";
+                        break;
+                }
+
+                conditionStrings.Add( String.Format(
+                    "{0}{1}{2}{3}",
+                    condition.TableChar == '\0' ? "" : condition.TableChar + ".",
+                    condition.ColumnKey,
+                    comparatorString,
+                    // TODO: Create a proxy token value.
+                    //condition.TestValue
+                    TransformProxyToken( condition )
+                ) );
+            }
+
+            return conditionStrings.ToArray();
+        }
+
+#endif // USE_SQLITE
 
         public object SelectObject( string column, string table, string keyColumn, string comparer ) {
             string selectString = String.Format(
@@ -270,7 +310,6 @@ namespace SimpleUtils {
             List<DBRow> rowsOut = new List<DBRow>();
             List<string> columnSelectionStrings = new List<string>();
             List<string> tableJoinStrings = new List<string>();
-            List<string> conditionStrings = new List<string>();
 
 #if USE_SQLITE
             foreach( DBColumn column in columnSelections ) {
@@ -292,29 +331,7 @@ namespace SimpleUtils {
                 ) );
             }
 
-            // Translate the conditions for SQLite.
-            foreach( DBCondition condition in conditions ) {
-                string comparatorString = "=";
-                switch( condition.Comparator ) {
-                    case DBComparator.GREATER_THAN:
-                        comparatorString = ">";
-                        break;
-
-                    case DBComparator.LESS_THAN:
-                        comparatorString = "<";
-                        break;
-                }
-
-                conditionStrings.Add( String.Format(
-                    "{0}.{1}{2}{3}",
-                    condition.TableChar,
-                    condition.ColumnKey,
-                    comparatorString,
-                    // TODO: Create a proxy token value.
-                    //condition.TestValue
-                    TransformProxyToken( condition )
-                ) );
-            }
+            string[] conditionStrings = TransformConditionStrings( conditions );
 
             string selectQueryString = String.Format(
                 "SELECT {0} FROM {1} AS {2} {3} WHERE {4} ORDER BY t.src_ip ASC",
@@ -437,6 +454,51 @@ namespace SimpleUtils {
                         throw new SimpleDBLayerBusyException( ex.Message );
                     }
 #endif // USE_SQLITE_MANAGED
+                } catch( SQLiteException ex ) {
+                    // TODO: Detect busy exception and handle with keepTrying if not managed.
+                    throw new SimpleDBLayerException( ex.Message );
+                }
+            }
+#endif
+        }
+
+
+        public void DeleteRows( string table, DBCondition[] conditions, bool keepTrying ) {
+#if USE_SQLITE
+
+            string[] conditionStrings = TransformConditionStrings( conditions );
+
+            string deleteString = String.Format(
+                "DELETE FROM {0} WHERE {1}",
+                table,
+                string.Join( ",", conditionStrings )
+            );
+
+            int attempts = 0;
+            while( attempts < MAX_ATTEMPTS ) {
+                try {
+                    using( SQLiteCommand deleteCommand = new SQLiteCommand( deleteString, this.database ) ) {
+
+                        // Add the proxies.
+                        foreach( DBCondition condition in conditions ) {
+#if USE_SQLITE_MANAGED
+                    trafficReadCommand.Parameters.Add(
+                        TransformProxyToken( condition ),
+                        condition.TestValue
+                    );
+#else
+                            deleteCommand.Parameters.AddWithValue(
+                                TransformProxyToken( condition ),
+                                condition.TestValue
+                            );
+#endif // USE_SQLITE_MANAGED
+                        }
+                        
+                        deleteCommand.ExecuteNonQuery();
+
+                        // We were successful, so just go ahead.
+                        attempts = MAX_ATTEMPTS;
+                    }
                 } catch( SQLiteException ex ) {
                     // TODO: Detect busy exception and handle with keepTrying if not managed.
                     throw new SimpleDBLayerException( ex.Message );
