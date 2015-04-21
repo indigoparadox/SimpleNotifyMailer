@@ -13,9 +13,10 @@ namespace SimpleUtils {
 
             private SimplePipeServer server;
 
-            public bool RecievedFromClient { get; set; }
+            public int RecievedFromClient { get; set; }
 
             public ServerTest( string pipeNameIn ) {
+                this.RecievedFromClient = 0;
                 this.server = new SimplePipeServer( pipeNameIn );
                 this.server.OnReadCallback = this.OnRead;
                 this.server.Listen();
@@ -26,8 +27,8 @@ namespace SimpleUtils {
             }
 
             private void OnRead( string messageIn ) {
-                if( messageIn.Equals( "Test" ) ) {
-                    this.RecievedFromClient = true;
+                if( messageIn.StartsWith( "Test" ) ) {
+                    this.RecievedFromClient += 1;
                 }
 
                 Debug.WriteLine( messageIn );
@@ -75,7 +76,7 @@ namespace SimpleUtils {
         [TestMethod]
         public void TestSimplePipeClientToServer() {
 
-            string pipeName = "SimplePipeTestPipe";
+            string pipeName = "SimplePipeTestPipeCTS";
 
             using( ServerTest testServer = new ServerTest(pipeName) ) {
 
@@ -88,14 +89,96 @@ namespace SimpleUtils {
 
                 testServer.WaitForClients();
 
-                Assert.IsTrue( testServer.RecievedFromClient );
+                Assert.IsTrue( 0 < testServer.RecievedFromClient );
+            }
+        }
+
+        [TestMethod]
+        public void TestSimplePipeClientToServerMultiple() {
+
+            string pipeName = "SimplePipeTestPipeCTSM";
+
+            using( ServerTest testServer = new ServerTest( pipeName ) ) {
+
+                SimplePipeClient client = new SimplePipeClient( pipeName );
+                //client.Connect();
+                client.Write( "Test", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 0 < testServer.RecievedFromClient );
+
+                client.Write( "Test1", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 1 < testServer.RecievedFromClient );
+
+                client.Write( "Test2", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 1 < testServer.RecievedFromClient );
+
+                client.Write( "Test3", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 1 < testServer.RecievedFromClient );
+
+                // TODO: Actually wait until server has nothing else to read.
+                //Thread.Sleep( 2000 );
+
+
+            }
+        }
+
+        [TestMethod]
+        public void TestSimplePipeClientServerChat() {
+
+            string pipeName = "SimplePipeTestPipeCSC";
+            int clientReadCount = 0;
+
+            using( ServerTest testServer = new ServerTest( pipeName ) ) {
+
+                SimplePipeClient client = new SimplePipeClient( pipeName );
+                client.OnReadCallback = delegate( string messageIn ){
+                    if( messageIn.StartsWith( "Test" ) ) {
+                        clientReadCount += 1;
+                    }
+                };
+                client.Listen();
+                
+                client.Write( "Test", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 0 < testServer.RecievedFromClient );
+
+                testServer.Write( "Test" );
+                client.WaitForPeers();
+                Assert.IsTrue( 0 < clientReadCount );
+
+                client.Write( "Test1", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 1 < testServer.RecievedFromClient );
+
+                testServer.Write( "TestA" );
+                client.WaitForPeers();
+                Assert.IsTrue( 1 < clientReadCount );
+
+                client.Write( "Test2", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 2 < testServer.RecievedFromClient );
+
+                testServer.Write( "TestB" );
+                client.WaitForPeers();
+                Assert.IsTrue( 2 < clientReadCount );
+
+                client.Write( "Test3", true );
+                testServer.WaitForClients();
+                Assert.IsTrue( 3 < testServer.RecievedFromClient );
+
+                testServer.Write( "TestC" );
+                client.WaitForPeers();
+                Assert.IsTrue( 3 < clientReadCount );
             }
         }
 
         [TestMethod]
         public void TestSimplePipeServerToClient() {
 
-            string pipeName = "SimplePipeTestPipe";
+            string pipeName = "SimplePipeTestPipeSTC";
             bool clientRead = false;
 
             using( ServerTest testServer = new ServerTest( pipeName ) ) {

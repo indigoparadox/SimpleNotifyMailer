@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 
@@ -15,12 +17,13 @@ namespace SimpleUtils {
     /// back to the client.
     /// </summary>
     public class SimplePipeServer : SimplePipePeer {
-
         public SimplePipeServer( string pipeNameIn ) : base( pipeNameIn ) {
-            //this.pipeServer = SimplePipePeer.OpenReadServerPipe( SimplePipePeer.FormatPipeName( pipeNameIn, true ) );
-            //this.pipeServerStream = new StreamReader( this.pipeServer );
-
             this.client = false;
+        }
+
+        public SimplePipeServer( string pipeNameIn, SimplePipeAccessLevel accessLevelIn ) : base( pipeNameIn ) {
+            this.client = false;
+            this.accessLevel = accessLevelIn;
         }
     }
 }

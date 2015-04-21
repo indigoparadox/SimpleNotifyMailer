@@ -17,6 +17,11 @@ namespace SimpleUtils {
         public SimplePipeConnectionException( string messageIn ) : base( messageIn ) { }
     }
 
+    public enum SimplePipeAccessLevel {
+        Default,
+        AuthenticatedUsers
+    }
+
     public abstract class SimplePipePeer {
 
         protected const uint BUFFER_SIZE = 4096;
@@ -29,45 +34,71 @@ namespace SimpleUtils {
         protected bool active = true;
         protected bool connected = false;
         protected bool client = true; // Are we a client? Should be overridden by servers.
+        protected SimplePipeAccessLevel accessLevel = SimplePipeAccessLevel.Default;
+        
+        /// <summary>
+        /// The duration (in seconds) to wait before timing out a connection.
+        /// 
+        /// -1 means wait forever.
+        /// </summary>
+        public int ConnectionTimeout { get; set; }
 
         public SimplePipePeer( string pipeNameIn ) {
             this.pipeName = pipeNameIn;
 
             this.OnReadCallback = null;
+
+            this.ConnectionTimeout = -1;
         }
 
         public static string FormatPipeName( string pipeNameIn, bool returnPipe ) {
             return String.Format( "\\\\.\\pipe\\{0}{1}", pipeNameIn, returnPipe ? "Return" : "" );
         }
 
-#if false
-        protected static NamedPipeServerStream OpenReadServerPipe(string pipePathIn) {
+        protected NamedPipeServerStream CreateServerPipe( string pipePathIn ) {
             NamedPipeServerStream newPipe = new NamedPipeServerStream(
                 pipePathIn,
                 PipeDirection.InOut,
-                100,
-                PipeTransmissionMode.Message
+                1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous,
+                0,
+                0,
+                null,
+                HandleInheritability.None,
+                PipeAccessRights.ChangePermissions
             );
-            
-#if USE_PIPE_ACL
-            // Allow normal users to talk to us.
-            PipeSecurity listenerAccess = newPipe.GetAccessControl();
-            listenerAccess.AddAccessRule( new PipeAccessRule(
-                new SecurityIdentifier( WellKnownSidType.AuthenticatedUserSid, null ),
-                PipeAccessRights.ReadWrite,
-                AccessControlType.Allow
-            ) );
-            listenerAccess.AddAccessRule( new PipeAccessRule(
-                WindowsIdentity.GetCurrent().Owner,
-                PipeAccessRights.FullControl,
-                AccessControlType.Allow
-            ) );
-            newPipe.SetAccessControl( listenerAccess );
-#endif // USE_PIPE_ACL
+
+            if( SimplePipeAccessLevel.Default != this.accessLevel ) {
+
+                PipeSecurity listenerAccess = newPipe.GetAccessControl();
+
+                switch( this.accessLevel ) {
+                    case SimplePipeAccessLevel.AuthenticatedUsers:
+                        listenerAccess.AddAccessRule( new PipeAccessRule(
+                            new SecurityIdentifier( WellKnownSidType.AuthenticatedUserSid, null ),
+                            PipeAccessRights.ReadWrite,
+                            AccessControlType.Allow
+                        ) );
+                        break;
+
+                    default:
+                        // This shouldn't happen.
+                        break;
+                }
+
+                // Always allow the owner full control.
+                listenerAccess.AddAccessRule( new PipeAccessRule(
+                    WindowsIdentity.GetCurrent().Owner,
+                    PipeAccessRights.FullControl,
+                    AccessControlType.Allow
+                ) );
+
+                newPipe.SetAccessControl( listenerAccess );
+            }
 
             return newPipe;
         }
-#endif
 
         public void Write( string messageIn, bool waitSync ) {
             try {
@@ -78,9 +109,20 @@ namespace SimpleUtils {
                     PipeOptions.Asynchronous
                 );
 
-                // The connect function will indefinitely wait for the pipe to become available.
-                pipeClientLocal.Connect();
-                this.connected = true;
+                // The connect function will indefinitely wait for the pipe to become available.\
+                // TODO: Is this thread-safe? I don't think it is.
+                int localTimeoutCountdown = 0;
+                do {
+                    try {
+                        pipeClientLocal.Connect( 1000 );
+                        this.connected = true;
+                    } catch( IOException ex ) {
+                        localTimeoutCountdown++;
+                        if( 0 <= this.ConnectionTimeout && this.ConnectionTimeout <= localTimeoutCountdown ) {
+                            throw new TimeoutException( ex.Message );
+                        }
+                    }
+                } while( !this.connected );
 
                 byte[] buffer = Encoding.UTF8.GetBytes( messageIn );
                 if( waitSync ) {
@@ -93,8 +135,8 @@ namespace SimpleUtils {
                     pipeClientLocal.BeginWrite( buffer, 0, buffer.Length, new AsyncCallback( this.OnWrite ), pipeClientLocal );
                 }
             } catch( TimeoutException ex ) {
-                // TODO
-                Debug.WriteLine( ex.Message );
+                // TODO: Does this still execute finally{} below?
+                throw ex;
             } finally {
                 this.connected = false;
             }
@@ -103,13 +145,7 @@ namespace SimpleUtils {
         public void Listen() {
             try {
                 string pipeName = SimplePipePeer.FormatPipeName( this.pipeName, this.client );
-                NamedPipeServerStream pipeServerLocal = new NamedPipeServerStream(
-                    pipeName,
-                    PipeDirection.InOut,
-                    1,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous
-                );
+                NamedPipeServerStream pipeServerLocal = CreateServerPipe( pipeName );
                 pipeServerLocal.BeginWaitForConnection( new AsyncCallback( this.OnConnection ), pipeServerLocal );
             } catch( Exception ex ) {
                 Debug.WriteLine( ex.Message );
@@ -148,12 +184,8 @@ namespace SimpleUtils {
             }
 
             // Create a new recursive wait server.
-            pipeServerLocal = new NamedPipeServerStream(
-                SimplePipePeer.FormatPipeName( this.pipeName, this.client ),
-                PipeDirection.InOut,
-                1,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous
+            pipeServerLocal = CreateServerPipe(
+                SimplePipePeer.FormatPipeName( this.pipeName, this.client )
             );
             pipeServerLocal.BeginWaitForConnection( new AsyncCallback( this.OnConnection ), pipeServerLocal );
         }
