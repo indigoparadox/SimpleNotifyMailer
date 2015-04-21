@@ -69,7 +69,7 @@ namespace SimpleUtils {
         }
 
         [TestMethod]
-        public void TestSimpleClientToServer() {
+        public void TestSimplePipeClientToServer() {
 
             string pipeName = "SimplePipeTestPipe";
 
@@ -80,14 +80,14 @@ namespace SimpleUtils {
                 client.Write( "Test", true );
 
                 // TODO: Actually wait until server has nothing else to read.
-                Thread.Sleep( 2000 );
+                //Thread.Sleep( 2000 );
 
                 Assert.IsTrue( testServer.RecievedFromClient );
             }
         }
 
         [TestMethod]
-        public void TestSimpleServerToClient() {
+        public void TestSimplePipeServerToClient() {
 
             string pipeName = "SimplePipeTestPipe";
             bool clientRead = false;
@@ -100,7 +100,7 @@ namespace SimpleUtils {
                 testServer.Write( "Test" );
 
                 // TODO: Actually wait until server has nothing else to read.
-                Thread.Sleep( 2000 );
+                //Thread.Sleep( 2000 );
 
                 Assert.IsTrue( clientRead );
             }
