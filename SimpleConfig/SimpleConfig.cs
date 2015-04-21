@@ -53,7 +53,7 @@ namespace SimpleUtils {
             if( string.IsNullOrWhiteSpace( listString ) ) {
                 listOut = new string[] { };
             } else {
-                listOut = listString.Split( separatorIn );
+                listOut = listString.Split( separatorIn ).Select( i => i.Trim() ).ToArray();
             }
             return listOut;
         }
