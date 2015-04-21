@@ -30,6 +30,10 @@ namespace SimpleUtils {
             this.Contents = contentsIn;
         }
 
+        public void Rewind() {
+            this.Contents.Seek( 0, SeekOrigin.Begin );
+        }
+
         public void Dispose() {
             this.Contents.Dispose();
         }
