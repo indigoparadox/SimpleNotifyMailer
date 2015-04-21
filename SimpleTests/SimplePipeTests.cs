@@ -33,6 +33,10 @@ namespace SimpleUtils {
                 Debug.WriteLine( messageIn );
             }
 
+            public void WaitForClients() {
+                this.server.WaitForPeers();
+            }
+
             public void Dispose() {
                 this.server.Stop();
             }
@@ -82,6 +86,8 @@ namespace SimpleUtils {
                 // TODO: Actually wait until server has nothing else to read.
                 //Thread.Sleep( 2000 );
 
+                testServer.WaitForClients();
+
                 Assert.IsTrue( testServer.RecievedFromClient );
             }
         }
@@ -101,6 +107,9 @@ namespace SimpleUtils {
 
                 // TODO: Actually wait until server has nothing else to read.
                 //Thread.Sleep( 2000 );
+
+                testServer.WaitForClients();
+                client.WaitForPeers();
 
                 Assert.IsTrue( clientRead );
             }

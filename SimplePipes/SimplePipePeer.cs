@@ -80,6 +80,7 @@ namespace SimpleUtils {
 
                 // The connect function will indefinitely wait for the pipe to become available.
                 pipeClientLocal.Connect();
+                this.connected = true;
 
                 byte[] buffer = Encoding.UTF8.GetBytes( messageIn );
                 if( waitSync ) {
@@ -94,6 +95,8 @@ namespace SimpleUtils {
             } catch( TimeoutException ex ) {
                 // TODO
                 Debug.WriteLine( ex.Message );
+            } finally {
+                this.connected = false;
             }
         }
 
@@ -117,7 +120,17 @@ namespace SimpleUtils {
             this.active = false;
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        public void WaitForPeers() {
+            while( this.connected ) {
+                Thread.Sleep( 100 );
+            }
+        }
+
         protected void OnConnection( IAsyncResult iarIn ) {
+            this.connected = true;
             NamedPipeServerStream pipeServerLocal = (NamedPipeServerStream)iarIn.AsyncState;
             pipeServerLocal.EndWaitForConnection( iarIn );
 
@@ -127,6 +140,7 @@ namespace SimpleUtils {
             this.OnRead( Encoding.UTF8.GetString( buffer ) );
 
             pipeServerLocal.Close();
+            this.connected = false;
 
             if( !this.active ) {
                 // Don't continue listening.
