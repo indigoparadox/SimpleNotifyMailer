@@ -17,6 +17,11 @@ namespace SimpleUtils {
         NODE_64,
         NODE_DEFAULT
     }
+
+    public enum SimpleConfigRegistryHive {
+        HIVE_LOCAL_MACHINE,
+        HIVE_LOCAL_USER
+    }
 #endif // USE_REGISTRY
 
     public class SimpleConfigException : Exception {
@@ -96,6 +101,10 @@ namespace SimpleUtils {
         }
 
         public void SaveConfigRegistry( string appKeyIn, SimpleConfigRegistryNode regNodeIn ) {
+            this.SaveConfigRegistry( appKeyIn, regNodeIn, SimpleConfigRegistryHive.HIVE_LOCAL_MACHINE );
+        }
+            
+        public void SaveConfigRegistry( string appKeyIn, SimpleConfigRegistryNode regNodeIn, SimpleConfigRegistryHive hiveIn ) {
 
             RegistryView regView = RegistryView.Default;
             switch(regNodeIn){
@@ -107,8 +116,13 @@ namespace SimpleUtils {
                     break;
             }
 
+            RegistryHive regHive = RegistryHive.LocalMachine;
+            if( SimpleConfigRegistryHive.HIVE_LOCAL_USER == hiveIn ) {
+                regHive = RegistryHive.CurrentUser;
+            }
+
             try {
-                using( RegistryKey baseKey = RegistryKey.OpenBaseKey( RegistryHive.LocalMachine, regView ) ) {
+                using( RegistryKey baseKey = RegistryKey.OpenBaseKey( regHive, regView ) ) {
 
                     // Make sure the key exists before writing to it.
                     using( RegistryKey loadKey = baseKey.OpenSubKey( "Software\\" + appKeyIn ) ) {
@@ -137,8 +151,11 @@ namespace SimpleUtils {
         public static SimpleConfig LoadConfigRegistry( string appKeyIn ) {
             return SimpleConfig.LoadConfigRegistry( appKeyIn, SimpleConfigRegistryNode.NODE_DEFAULT );
         }
-
         public static SimpleConfig LoadConfigRegistry( string appKeyIn, SimpleConfigRegistryNode regNodeIn ) {
+            return SimpleConfig.LoadConfigRegistry( appKeyIn, regNodeIn, SimpleConfigRegistryHive.HIVE_LOCAL_MACHINE );
+        }
+
+        public static SimpleConfig LoadConfigRegistry( string appKeyIn, SimpleConfigRegistryNode regNodeIn, SimpleConfigRegistryHive hiveIn ) {
             SimpleConfig optionsOut = new SimpleConfig();
 
             RegistryView regView = RegistryView.Default;
@@ -151,8 +168,13 @@ namespace SimpleUtils {
                     break;
             }
 
+            RegistryHive regHive = RegistryHive.LocalMachine;
+            if( SimpleConfigRegistryHive.HIVE_LOCAL_USER == hiveIn ) {
+                regHive = RegistryHive.CurrentUser;
+            }
+
             try {
-                using( RegistryKey baseKey = RegistryKey.OpenBaseKey( RegistryHive.LocalMachine, regView ) ) {
+                using( RegistryKey baseKey = RegistryKey.OpenBaseKey( regHive, regView ) ) {
                     using( RegistryKey loadKey = baseKey.OpenSubKey( "Software\\" + appKeyIn ) ) {
                         if( null == loadKey ) {
                             // The key doesn't exist, so we can't do anything, anyway.
