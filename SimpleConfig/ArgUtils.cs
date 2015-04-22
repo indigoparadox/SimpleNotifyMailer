@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SimpleUtils {
 
@@ -49,8 +50,25 @@ namespace SimpleUtils {
             if( typeof( String ) == argOptionsIn[argIndexIn].ArgType ) {
                 argOptionsIn[argIndexIn].ArgResult = dataIn;
             } else if( typeof( DateTime ) == argOptionsIn[argIndexIn].ArgType ) {
+                // Try to intelligently parse the date and time.
+
+                Regex timeAgo = new Regex( "^([0-9]+) days? ago$" );
+                Match timeAgoMatch = timeAgo.Match( dataIn );
+                if( timeAgoMatch.Success ) {
+                    int daysAgo = 0;
+                    if( int.TryParse( timeAgoMatch.Groups[1].Value, out daysAgo ) ) {
+                        argOptionsIn[argIndexIn].ArgResult = DateTime.Now.Subtract( new TimeSpan( daysAgo, 0, 0, 0 ) );
+                        goto ConvertComplete;
+                    }
+                }
+
+                // Just try it as a normal date string.
                 argOptionsIn[argIndexIn].ArgResult = DateTime.Parse( dataIn );
             }
+
+ConvertComplete:
+
+            return;
         }
 
         /// <summary>
