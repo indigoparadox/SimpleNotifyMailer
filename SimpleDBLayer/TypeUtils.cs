@@ -5,6 +5,11 @@ using System.Text;
 
 namespace SimpleUtils {
     public class TypeUtils {
+
+        public static string FormatMB( long bytes ) {
+            return String.Format( "{0:0.00}", bytes / 1024 / 1042 );
+        }
+
         public static string[] SplitStringQuoted( string stringIn ) {
             List<string> stringArrayOut = new List<string>();
             bool insideQuotes = false;
