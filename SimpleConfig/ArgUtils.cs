@@ -12,21 +12,15 @@ namespace SimpleUtils {
         public Type ArgType { get; set; }
         public object ArgResult { get; set; }
 
-        public SimpleArg(string shortActionIn, string longActionIn, string helpIn, Type typeIn ) {
+        public SimpleArg( string shortActionIn, string longActionIn, string helpIn, Type typeIn, object defaultIn ) {
             this.ShortAction = shortActionIn;
             this.LongAction = longActionIn;
             this.Help = helpIn;
             this.ArgType = typeIn;
-
-            // Default booleans to false.
-            if( typeof( Boolean ) == typeIn ) {
-                this.ArgResult = false;
-            } else {
-                this.ArgResult = null;
-            }
+            this.ArgResult = defaultIn;
         }
 
-        public SimpleArg( string shortActionIn, string longActionIn, Type typeIn ) : this( shortActionIn, longActionIn, null, typeIn ) {
+        public SimpleArg( string shortActionIn, string longActionIn, Type typeIn, object defaultIn ) : this( shortActionIn, longActionIn, null, typeIn, defaultIn ) {
 
         }
     }
