@@ -506,5 +506,24 @@ namespace SimpleUtils {
             }
 #endif
         }
+
+        public void Compact( bool keepTrying ) {
+#if USE_SQLITE
+            int attempts = 0;
+            while( attempts < MAX_ATTEMPTS ) {
+                try {
+                    using( SQLiteCommand cleanCommand = new SQLiteCommand( "VACUUM;", this.database ) ) {
+                        cleanCommand.ExecuteNonQuery();
+
+                        // We were successful, so just go ahead.
+                        attempts = MAX_ATTEMPTS;
+                    }
+                } catch( SQLiteException ex ) {
+                    // TODO: Detect busy exception and handle with keepTrying if not managed.
+                    throw new SimpleDBLayerException( ex.Message );
+                }
+            }
+#endif // USE_SQLITE
+        }
     }
 }
