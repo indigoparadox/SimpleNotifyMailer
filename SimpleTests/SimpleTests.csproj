@@ -56,6 +56,7 @@
     <Compile Include="SimplePipeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleConfigTests.cs" />
+    <Compile Include="SimpleDBTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SimpleConfig\SimpleConfig.csproj">
