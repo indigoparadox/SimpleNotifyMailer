@@ -58,6 +58,16 @@ namespace SimpleUtils {
             return listOut;
         }
 
+        public int GetInteger( string keyIn, int defaultIn ) {
+            int intOut = 0;
+
+            if( this.internalConfig.ContainsKey( keyIn ) && int.TryParse( this.internalConfig[keyIn], out intOut ) ) {
+                return intOut;
+            } else {
+                return defaultIn;
+            }
+        }
+
 #if USE_WINFORMS
         /// <summary>
         /// 
