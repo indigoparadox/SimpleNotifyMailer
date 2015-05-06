@@ -101,6 +101,10 @@ namespace SimpleUtils {
         }
 
         public void Write( string messageIn, bool waitSync ) {
+            this.Write( Encoding.UTF8.GetBytes( messageIn ), waitSync );
+        }
+
+        public void Write( byte[] bufferIn, bool waitSync ) {
             try {
                 NamedPipeClientStream pipeClientLocal = new NamedPipeClientStream(
                     ".",
@@ -124,15 +128,14 @@ namespace SimpleUtils {
                     }
                 } while( !this.connected );
 
-                byte[] buffer = Encoding.UTF8.GetBytes( messageIn );
                 if( waitSync ) {
-                    pipeClientLocal.Write( buffer, 0, buffer.Length );
+                    pipeClientLocal.Write( bufferIn, 0, bufferIn.Length );
                     pipeClientLocal.Flush();
                     pipeClientLocal.Close();
                     pipeClientLocal.Dispose();
                 } else {
                     // Just kick off the process and finish it below.
-                    pipeClientLocal.BeginWrite( buffer, 0, buffer.Length, new AsyncCallback( this.OnWrite ), pipeClientLocal );
+                    pipeClientLocal.BeginWrite( bufferIn, 0, bufferIn.Length, new AsyncCallback( this.OnWrite ), pipeClientLocal );
                 }
             } catch( TimeoutException ex ) {
                 // TODO: Does this still execute finally{} below?
