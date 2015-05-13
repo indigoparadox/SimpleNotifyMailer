@@ -7,7 +7,7 @@
     <ProjectGuid>{C916301B-3E88-4FAB-97D9-7E23CE9CFBDD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SimpleExcel</RootNamespace>
+    <RootNamespace>SimpleUtils</RootNamespace>
     <AssemblyName>SimpleExcel</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SimpleDataPresentation.cs" />
     <Compile Include="SimpleExcelSheet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
