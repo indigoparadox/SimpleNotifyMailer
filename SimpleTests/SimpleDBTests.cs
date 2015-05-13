@@ -14,8 +14,8 @@ namespace SimpleTests {
             using( SimpleDBLayer db = new SimpleDBLayer( TEST_DB_PATH ) ) {
 
                 SimpleDBLayerColumn[] columnsTest = new SimpleDBLayerColumn[] {
-                new SimpleDBLayerColumn("ID",SimpleDBLayerColumnType.INTEGER,true,true,true,true,null),
-                new SimpleDBLayerColumn("String",SimpleDBLayerColumnType.VAR_255,false,false,false,false,null),
+                    new SimpleDBLayerColumn("ID",SimpleDBLayerColumnType.INTEGER,true,true,true,true,null),
+                    new SimpleDBLayerColumn("String",SimpleDBLayerColumnType.VAR_255,false,false,false,false,null),
                     new SimpleDBLayerColumn("BigNumber",SimpleDBLayerColumnType.DOUBLE,false,false,true,false,null),
                 };
 
