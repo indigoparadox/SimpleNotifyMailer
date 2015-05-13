@@ -6,3 +6,4 @@ SimpleNotifyMailer.v12.suo
 packages/Community.CsharpSqlite.SQLiteClient.*
 packages/System.Data.SQLite.Core.*
 *.swp
+packages/NPOI.*
