@@ -54,9 +54,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SimpleDataPresentation.cs" />
+    <Compile Include="SimpleExcelColumn.cs" />
     <Compile Include="SimpleExcelSheet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleExcelWorkbook.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
