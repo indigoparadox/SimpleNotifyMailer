@@ -48,7 +48,7 @@ namespace SimpleUtils {
         }
 
         public ICellStyle CreateCellStyle( string indexIn ) {
-            XSSFCellStyle styleOut = (XSSFCellStyle)this.workbook.CreateCellStyle();
+            ICellStyle styleOut = this.workbook.CreateCellStyle();
             this.cellStyles.Add( indexIn, styleOut );
             return styleOut;
         }
@@ -61,8 +61,8 @@ namespace SimpleUtils {
             return this.workbook.CreateSheet( titleIn );
         }
 
-        public XSSFFont CreateFont() {
-            return (XSSFFont)this.workbook.CreateFont();
+        public IFont CreateFont() {
+            return this.workbook.CreateFont();
         }
 
         public SimpleExcelSheet CreateSheet( string titleIn, SimpleExcelColumn[] columnsIn , IEnumerable<object> rowsIn ) {
