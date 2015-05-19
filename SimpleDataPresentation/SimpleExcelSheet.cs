@@ -9,13 +9,21 @@ using System.Text;
 
 namespace SimpleUtils {
 
+    public class SimpleExcelSheetOverflowException : Exception {
+        public SimpleExcelSheetOverflowException( string messageIn ) : base( messageIn ) { }
+    }
 
     public class SimpleExcelSheet {
 
-        protected ISheet sheet;
+        public static readonly int MAX_ROWS_XSSF = 1048575;
+        public static readonly int MAX_ROWS_HSSF = 65535;
 
-        public SimpleExcelSheet( ISheet sheetIn ) {
+        protected ISheet sheet;
+        protected int maxRows;
+
+        public SimpleExcelSheet( ISheet sheetIn, int maxRowsIn ) {
             this.sheet = sheetIn;
+            this.maxRows = maxRowsIn;
         }
         
         /*
@@ -41,12 +49,13 @@ namespace SimpleUtils {
             this.sheet.AddMergedRegion( new CellRangeAddress( rowStartIndexIn, rowStartIndexIn, 0, 10 ) );
         }
 
-        public void PrintSheetTable( SimpleExcelColumn[] columnsIn, IEnumerable<object> reportObjectsIn ) {
-            this.PrintSheetTable( 2, columnsIn, reportObjectsIn );
+        public void PrintSheetTable( int maxRowsIn, SimpleExcelColumn[] columnsIn, IEnumerable<object> reportObjectsIn ) {
+            this.PrintSheetTable( 2, maxRowsIn, columnsIn, reportObjectsIn );
         }
 
-        public void PrintSheetTable( int rowStartIndexIn, SimpleExcelColumn[] columnsIn, IEnumerable<object> reportObjectsIn ) {
+        public void PrintSheetTable( int rowStartIndexIn, int maxRowsIn, SimpleExcelColumn[] columnsIn, IEnumerable<object> reportObjectsIn ) {
             int highestIndex = 0;
+            bool overflow = false;
 
             // Create headers.
             int rowIndex = rowStartIndexIn;
@@ -66,6 +75,10 @@ namespace SimpleUtils {
 
                 // Create the row for this connection.
                 rowIndex++;
+                if( this.maxRows <= rowIndex ){
+                    overflow = true;
+                    break;
+                }
                 row = this.sheet.CreateRow( rowIndex );
 
                 foreach( SimpleExcelColumn column in columnsIn ) {
@@ -100,6 +113,10 @@ namespace SimpleUtils {
                 0,
                 highestIndex
             ) );
+
+            if( overflow ) {
+                throw new SimpleExcelSheetOverflowException( "More rows specified than current format allows." );
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using NPOI.SS.UserModel;
+﻿using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
@@ -9,27 +10,36 @@ using System.Text;
 namespace SimpleUtils {
     public class SimpleExcelWorkbook {
         private IWorkbook workbook;
-        private Dictionary<string, XSSFCellStyle> cellStyles = new Dictionary<string, XSSFCellStyle>();
+        private Dictionary<string, ICellStyle> cellStyles = new Dictionary<string, ICellStyle>();
+        private bool useXlsx;
 
-        public SimpleExcelWorkbook() {
-            this.workbook = new XSSFWorkbook();
+        public SimpleExcelWorkbook() : this( true ) { }
+
+        public SimpleExcelWorkbook( bool useXlsxIn ) {
+            if( useXlsxIn ) {
+                this.workbook = new XSSFWorkbook();
+            } else {
+                this.workbook = new HSSFWorkbook();
+            }
+
+            this.useXlsx = useXlsxIn;
 
             // Set headers font.
-            XSSFCellStyle bigTitleStyle = (XSSFCellStyle)workbook.CreateCellStyle();
-            XSSFFont bigTitleFont = (XSSFFont)workbook.CreateFont();
+            ICellStyle bigTitleStyle = workbook.CreateCellStyle();
+            IFont bigTitleFont = workbook.CreateFont();
             bigTitleFont.Boldweight = (short)FontBoldWeight.Bold;
             bigTitleFont.FontHeightInPoints = 20;
             bigTitleStyle.SetFont( bigTitleFont );
             this.cellStyles.Add( "BigTitle", bigTitleStyle );
 
-            XSSFCellStyle titleStyle = (XSSFCellStyle)workbook.CreateCellStyle();
-            XSSFFont titleFont = (XSSFFont)workbook.CreateFont();
+            ICellStyle titleStyle = workbook.CreateCellStyle();
+            IFont titleFont = workbook.CreateFont();
             titleFont.Boldweight = (short)FontBoldWeight.Bold;
             titleStyle.SetFont( titleFont );
             this.cellStyles.Add( "Title", titleStyle );
         }
 
-        public XSSFCellStyle GetCellStyle( string indexIn ) {
+        public ICellStyle GetCellStyle( string indexIn ) {
             if( this.cellStyles.ContainsKey( indexIn ) ) {
                 return this.cellStyles[indexIn];
             } else {
@@ -37,7 +47,7 @@ namespace SimpleUtils {
             }
         }
 
-        public XSSFCellStyle CreateCellStyle( string indexIn ) {
+        public ICellStyle CreateCellStyle( string indexIn ) {
             XSSFCellStyle styleOut = (XSSFCellStyle)this.workbook.CreateCellStyle();
             this.cellStyles.Add( indexIn, styleOut );
             return styleOut;
@@ -56,11 +66,15 @@ namespace SimpleUtils {
         }
 
         public SimpleExcelSheet CreateSheet( string titleIn, SimpleExcelColumn[] columnsIn , IEnumerable<object> rowsIn ) {
-            SimpleExcelSheet sheetOut = new SimpleExcelSheet( this.workbook.CreateSheet( titleIn ) );
+            SimpleExcelSheet sheetOut = new SimpleExcelSheet( this.workbook.CreateSheet( titleIn ), useXlsx ? SimpleExcelSheet.MAX_ROWS_XSSF : SimpleExcelSheet.MAX_ROWS_HSSF );
 
             sheetOut.PrintSheetHeader( this.GetCellStyle( "Title" ), titleIn );
 
-            sheetOut.PrintSheetTable( columnsIn, rowsIn );
+            sheetOut.PrintSheetTable(
+                useXlsx ? SimpleExcelSheet.MAX_ROWS_XSSF : SimpleExcelSheet.MAX_ROWS_HSSF,
+                columnsIn,
+                rowsIn
+            );
 
             return sheetOut;
         }
