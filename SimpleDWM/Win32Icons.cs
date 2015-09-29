@@ -13,10 +13,12 @@ namespace SimpleDWM {
         public static extern bool DestroyIcon( IntPtr handle );
 
         public static IntPtr MakeIcon( Image img, int size, bool keepAspectRatio ) {
-            using( Bitmap square = new Bitmap( size, size ) )// create new bitmap
-            {
-                using( Graphics g = Graphics.FromImage( square ) ) // allow drawing to it
-                {
+            return MakeIcon( img, size, keepAspectRatio, null );
+        }
+
+        public static IntPtr MakeIcon( Image img, int size, bool keepAspectRatio, Brush backgroundColor ) {
+            using( Bitmap square = new Bitmap( size, size ) )            {
+                using( Graphics g = Graphics.FromImage( square ) )                {
                     int x, y, w, h; // dimensions for new image
 
                     if( !keepAspectRatio || img.Height == img.Width ) {
@@ -41,6 +43,9 @@ namespace SimpleDWM {
 
                     // make the image shrink nicely by using HighQualityBicubic mode
                     g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    if( null != backgroundColor ) {
+                        g.FillRectangle( backgroundColor, x, y, w, h );
+                    }
                     g.DrawImage( img, x, y, w, h ); // draw image with specified dimensions
                     g.Flush(); // make sure all drawing operations complete before we get the icon
 
